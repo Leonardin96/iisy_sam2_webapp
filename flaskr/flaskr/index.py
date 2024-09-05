@@ -1,4 +1,5 @@
 import functools
+from . import segmentation_helper
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
