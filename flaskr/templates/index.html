@@ -1,0 +1,12 @@
+<!doctype html>
+<head>
+  <script src="{{url_for('static', filename='js/index.js')}}" defer></script>
+</head>
+<body>
+  <h1>Image Selection</h1>
+  <form action="/" method=post enctype=multipart/form-data>
+    <h2>This is a Form</h2>
+    <input type="file" accept=".png, .jpg, .jpeg" name="image_file" />
+    <input type=submit value=Upload>
+  </form>
+</body>

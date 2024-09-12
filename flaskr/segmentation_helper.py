@@ -74,6 +74,14 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         plt.axis('off')
         plt.show()
 
+def sendImage(image):
+    image = Image.open(image)
+    image = np.array(image.convert('RGB'))
+    plt.figure(figsize=(10, 10))
+    plt.imshow(image)
+    plt.axis('on')
+    plt.show()
+
 # image = Image.open('./images/truck.jpg')
 # image = np.array(image.convert("RGB"))
 
