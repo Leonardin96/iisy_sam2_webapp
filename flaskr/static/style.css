@@ -1,0 +1,16 @@
+h2 {
+    margin-top: 0;
+}
+
+#content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 5rem;
+}
+
+#form_content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
