@@ -1,7 +1,7 @@
 import segmentation_helper
 
 from flask import (
-    Flask, render_template, request, url_for
+    Flask, render_template, request, redirect, url_for
 )
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -24,17 +24,19 @@ def index():
         
         if 'image_file' not in request.files:
             print('No file part')
-            return render_template('index.html')
         
         file = request.files['image_file']
 
         # Request send without file
         if file.filename == '':
             print('No selected file')
-            return render_template('index.html')
         
         # Request send with file and file-type is correct
         if file and allowed_file(file.filename):
             print('Successful POST')
-            segmentation_helper.sendImage(file) 
-            return render_template('index.html')   
+            print('Coordinates: ', request.form['coordinates'])
+            segmentation_helper.sendImage(file, request.form['coordinates'], True) 
+            return redirect(url_for('index', uploaded=True))
+
+        uploaded = request.args.get('uploaded', False)
+        return render_template('index.html', uploaded=uploaded)   

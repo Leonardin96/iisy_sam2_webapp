@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from PIL import Image
+import re
+import ast
 
 # select the device for computation
 if torch.cuda.is_available():
@@ -74,13 +76,52 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         plt.axis('off')
         plt.show()
 
-def sendImage(image):
+def sendImage(image, coordinates, doPrediction):
     image = Image.open(image)
     image = np.array(image.convert('RGB'))
     plt.figure(figsize=(10, 10))
     plt.imshow(image)
     plt.axis('on')
     plt.show()
+
+    if doPrediction == True:
+        predictSegments(image, coordinates)
+
+def predictSegments(image, coordinates):
+    from sam2.build_sam import build_sam2
+    from sam2.sam2_image_predictor import SAM2ImagePredictor
+
+    sam2_checkpoint = "./checkpoints/sam2_hiera_large.pt"
+    model_cfg = "sam2_hiera_l.yaml"
+
+    sam2_model = build_sam2(model_cfg, sam2_checkpoint, device=device)
+
+    predictor = SAM2ImagePredictor(sam2_model)
+
+    predictor.set_image(image)
+
+    # Use regex to extract the contents of each list
+    matches = re.findall(r'\[.*?\]', coordinates)
+
+    # Evaluate each match to convert it into a list
+    coordinateArrays = [ast.literal_eval(match) for match in matches]
+
+    input_point = np.array(coordinateArrays)
+    input_label = np.array([1])
+
+    masks, scores, logits = predictor.predict(
+        point_coords=input_point,
+        point_labels=input_label,
+        multimask_output=True,
+    )
+    sorted_ind = np.argsort(scores)[::-1]
+    masks = masks[sorted_ind]
+    scores = scores[sorted_ind]
+    logits = logits[sorted_ind]
+
+    masks.shape
+
+    show_masks(image, masks, scores, point_coords=input_point, input_labels=input_label, borders=True)
 
 # image = Image.open('./images/truck.jpg')
 # image = np.array(image.convert("RGB"))
@@ -90,19 +131,7 @@ def sendImage(image):
 # # plt.axis('on')
 # # plt.show()
 
-# from sam2.build_sam import build_sam2
-# from sam2.sam2_image_predictor import SAM2ImagePredictor
-
-# sam2_checkpoint = "./checkpoints/sam2_hiera_large.pt"
-# model_cfg = "sam2_hiera_l.yaml"
-
-# sam2_model = build_sam2(model_cfg, sam2_checkpoint, device=device)
-
-# predictor = SAM2ImagePredictor(sam2_model)
-
-# predictor.set_image(image)
-
-# input_point = np.array([[500, 375]])
+# input_point = np.array(coordinateArrays)
 # input_label = np.array([1])
 
 # # plt.figure(figsize=(10, 10))
