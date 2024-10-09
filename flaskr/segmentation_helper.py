@@ -74,6 +74,7 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         if len(scores) > 1:
             plt.title(f"Mask {i+1}, Score: {score:.3f}", fontsize=18)
         plt.axis('off')
+        plt.savefig(f'./resources/results/figure{i+1}.png', bbox_inches='tight')
         plt.show()
 
 def sendImage(image, coordinates, doPrediction):

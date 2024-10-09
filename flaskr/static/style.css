@@ -1,12 +1,55 @@
+:root {
+    --dot-size: 1rem;
+    --dot-border-size: .125rem;
+}
+body {
+    position: relative;
+}
+
 h2 {
     margin-top: 0;
 }
 
-#content {
+.btn,
+input::file-selector-button {
+    border: none;
+    border-radius: 0.5rem;
+    background-color: rgb(48, 92, 251);
+    padding: .75rem 1.5rem;
+    width: fit-content;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn:hover,
+input::file-selector-button:hover {
+    background-color: rgb(76, 114, 251);
+}
+
+input::file-selector-button {
+    margin-right: 1rem;
+}
+
+.page {
+    padding: 2rem;
+}
+
+.content {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    padding: 5rem;
+}
+
+.dot {
+    position: absolute;
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border: var(--dot-border-size) solid lightblue;
+    border-radius: 50%;
+    background-color: blue;
+    transform: translate(-100%, -100%);
 }
 
 #form_content {

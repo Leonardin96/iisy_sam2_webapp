@@ -1,3 +1,5 @@
+import os
+import glob
 import segmentation_helper
 
 from flask import (
@@ -17,6 +19,9 @@ def allowed_file(filename):
 def index():
     # Handle GET
     if request.method == 'GET':
+        files = glob.glob('./resources/results/*')
+        for f in files:
+            os.remove(f)
         return render_template('index.html')
     
     # Handle POST
@@ -36,7 +41,10 @@ def index():
             print('Successful POST')
             print('Coordinates: ', request.form['coordinates'])
             segmentation_helper.sendImage(file, request.form['coordinates'], True) 
-            return redirect(url_for('index', uploaded=True))
+            return redirect(url_for('results'))
 
-        uploaded = request.args.get('uploaded', False)
-        return render_template('index.html', uploaded=uploaded)   
+        return render_template('index.html')
+    
+@app.route('/results', methods=['GET', 'POST'])
+def results():
+    return render_template('results.html')

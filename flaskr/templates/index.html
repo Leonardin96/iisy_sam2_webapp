@@ -4,15 +4,17 @@
   <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div id="content">
-    <form action="/" method=post enctype=multipart/form-data>
-      <h2>Choose a picture</h2>
-      <div id="form_content">
-        <input id="img_input" type="file" accept=".png, .jpg, .jpeg" name="image_file" />
-        <input type=submit value=Upload>
-        <input id="coordinates_input" type="hidden" name="coordinates" value=""/>
-      </div>
-    </form>
-    <img width="800px" src="" />
+  <div class="page">
+    <div class="content">
+      <form action="/" method=post enctype=multipart/form-data>
+        <h2>Choose a picture</h2>
+        <div id="form_content">
+          <input id="img_input" type="file" accept=".png, .jpg, .jpeg" name="image_file" />
+          <input id="submit_btn" class="btn" type=submit value=Upload disabled>
+          <input id="coordinates_input" type="hidden" name="coordinates" value=""/>
+        </div>
+      </form>
+      <img width="800px" src="" />
+    </div>
   </div>
 </body>
