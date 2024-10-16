@@ -1,6 +1,8 @@
 import os
 import glob
 import segmentation_helper
+from pathlib import Path
+
 
 from flask import (
     Flask, render_template, request, redirect, url_for
@@ -8,8 +10,28 @@ from flask import (
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
+directories = [
+        "./resources/results/images",
+        "./resources/results/masks/images",
+        "./resources/results/masks/output"
+]
+
+for dir in directories:
+    Path(dir).mkdir(parents=True, exist_ok=True)
+
 app = Flask(__name__)
 app.secret_key = 'secret key'
+
+def clear_directory_contents(directory):
+    # Check if the directory exists
+    if os.path.exists(directory):
+        # Iterate over the files and directories inside the given directory
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -19,9 +41,9 @@ def allowed_file(filename):
 def index():
     # Handle GET
     if request.method == 'GET':
-        files = glob.glob('./resources/results/*')
-        for f in files:
-            os.remove(f)
+        for dir in directories:
+            clear_directory_contents(dir)
+        
         return render_template('index.html')
     
     # Handle POST
@@ -38,7 +60,7 @@ def index():
         
         # Request send with file and file-type is correct
         if file and allowed_file(file.filename):
-            segmentation_helper.sendImage(file, request.form['coordinates'], True) 
+            segmentation_helper.sendImage(file, request.form['coordinates'], request.form['labels']) 
             return redirect(url_for('results'))
 
         return render_template('index.html')

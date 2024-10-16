@@ -11,6 +11,8 @@ let originalWidth = 0;
 let coordinates = [];
 let labels = [];
 
+submitBtn.disabled = true;
+
 /**
  * Clears the form before the page reloads.
  */
@@ -43,6 +45,10 @@ const createDot = (posX, posY) => {
             coordinates.splice(duplicate, 1);
             labels.splice(duplicate, 1);
             e.currentTarget.remove();
+        }
+
+        if (coordinates.length < 1) {
+            submitBtn.disabled = true;
         }
     })
 
@@ -102,18 +108,22 @@ const getCoordinates = (target, e, dotClicked = false) => {
  * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
  */
 imgElem.addEventListener('click', (e) => {
-    submitBtn.toggleAttribute('disabled', hiddenInputCoordinates.value !== '');
     createDot(e.clientX, e.clientY);
+
     const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(e.currentTarget, e);
     coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
     labels.push(checkbox.checked ? 0 : 1);
-    console.log([...labels]);
+
+    if (coordinates.length > 0) {
+        submitBtn.disabled = false;
+    }
 })
 
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     
     coordinates.forEach(co => hiddenInputCoordinates.value += `[${co.x}, ${co.y}]`);
+    hiddenInputLabels.value += `[${labels}]`;
 
     form.submit();
 })

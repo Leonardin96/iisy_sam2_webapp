@@ -37,6 +37,14 @@ input::file-selector-button:hover {
     background-color: rgb(76, 114, 251);
 }
 
+.btn:disabled {
+    background-color: rgb(210, 210, 210);
+}
+
+input::file-selector-button:disabled {
+    background-color: rgb(210, 210, 210);
+}
+
 input::file-selector-button {
     margin-right: 1rem;
 }

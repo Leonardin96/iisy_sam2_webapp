@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import re
 import ast
-from pathlib import Path
+import json
 
 # select the device for computation
 if torch.cuda.is_available():
@@ -63,9 +63,16 @@ def show_box(box, ax):
 
 def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_labels=None, borders=True):
     for i, (mask, score) in enumerate(zip(masks, scores)):
+        Image.fromarray((mask * 255).astype('uint8'), mode='L').save(f'./resources/results/masks/images/mask{i+1}.png')
+
+        with open(f'./resources/results/masks/output/mask{i+1}.txt', 'w+') as filehandle:
+            mask = mask.astype(np.uint8)
+            json.dump(mask.tolist(), filehandle)
+
         plt.figure(figsize=(10, 10))
         plt.imshow(image)
         show_mask(mask, plt.gca(), borders=borders)
+        
         if point_coords is not None:
             assert input_labels is not None
             show_points(point_coords, input_labels, plt.gca())
@@ -75,18 +82,16 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         if len(scores) > 1:
             plt.title(f"Mask {i+1}, Score: {score:.3f}", fontsize=18)
         plt.axis('off')
-        Path("./resources/results").mkdir(parents=True, exist_ok=True)
-        plt.savefig(f'./resources/results/figure{i+1}.png', bbox_inches='tight')
+        plt.savefig(f'./resources/results/images/figure{i+1}.png', bbox_inches='tight')
         plt.show()
 
-def sendImage(image, coordinates, doPrediction):
+def sendImage(image, coordinates, labels):
     image = Image.open(image)
     image = np.array(image.convert('RGB'))
 
-    if doPrediction == True:
-        predictSegments(image, coordinates)
+    predictSegments(image, coordinates, labels)
 
-def predictSegments(image, coordinates):
+def predictSegments(image, coordinates, labels):
     from sam2.build_sam import build_sam2
     from sam2.sam2_image_predictor import SAM2ImagePredictor
 
@@ -100,13 +105,17 @@ def predictSegments(image, coordinates):
     predictor.set_image(image)
 
     # Use regex to extract the contents of each list
-    matches = re.findall(r'\[.*?\]', coordinates)
+    cordMatches = re.findall(r'\[.*?\]', coordinates)
 
     # Evaluate each match to convert it into a list
-    coordinateArrays = [ast.literal_eval(match) for match in matches]
+    coordinateArray = [ast.literal_eval(match) for match in cordMatches]
+    labelArray = ast.literal_eval(labels)
 
-    input_point = np.array(coordinateArrays)
-    input_label = np.array([1])
+    input_point = np.array(coordinateArray)
+    input_label = np.array(labelArray)
+
+    print(input_point)
+    print(input_label)
 
     masks, scores, logits = predictor.predict(
         point_coords=input_point,
@@ -115,7 +124,6 @@ def predictSegments(image, coordinates):
     )
     sorted_ind = np.argsort(scores)[::-1]
     masks = masks[sorted_ind]
-    print(masks)
     scores = scores[sorted_ind]
     logits = logits[sorted_ind]
 
