@@ -1,5 +1,7 @@
 const inputElem = document.querySelector('#img_input');
-const hiddenInput = document.querySelector('#coordinates_input');
+const checkbox = document.querySelector('#checkbox');
+const hiddenInputCoordinates = document.querySelector('#coordinates_input');
+const hiddenInputLabels = document.querySelector('#labels_input');
 const imgElem = document.querySelector('img');
 const form = document.querySelector('form');
 const submitBtn = document.querySelector('#submit_btn');
@@ -7,6 +9,7 @@ const submitBtn = document.querySelector('#submit_btn');
 let originalHeight = 0;
 let originalWidth = 0;
 let coordinates = [];
+let labels = [];
 
 /**
  * Clears the form before the page reloads.
@@ -21,15 +24,26 @@ window.onbeforeunload = () => {
  * @param {number} posY 
  */
 const createDot = (posX, posY) => {
-    console.log('Create dot...');
     const dot = document.createElement('div');
-    dot.setAttribute('class', 'dot');
+
+    checkbox.checked
+        ? dot.setAttribute('class', 'dot exclude')
+        : dot.setAttribute('class', 'dot include');
     dot.style.top = posY + 'px';
     dot.style.left = posX + 'px';
+
     const dotNode = document.querySelector('body').appendChild(dot);
+
     dotNode.addEventListener('click', (e) => {
-        console.log('clicked on dot');
-        console.log(getCoordinates(imgElem, e));
+        const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(imgElem, e, true);
+
+        const duplicate = coordinates.findIndex(obj => obj.x === xRelativeToOriginal && obj.y === yRelativeToOriginal);
+
+        if (duplicate > -1) {
+            coordinates.splice(duplicate, 1);
+            labels.splice(duplicate, 1);
+            e.currentTarget.remove();
+        }
     })
 
 }
@@ -39,11 +53,11 @@ const createDot = (posX, posY) => {
  * Reads the file and extracts the dimensions of it.
  */
 inputElem.addEventListener('change', () => {
-    document.querySelectorAll('.dot').forEach(e => {
-        e.remove();
+    document.querySelectorAll('.dot').forEach(elem => {
+        elem.remove();
     });
 
-    hiddenInput.value = '';
+    hiddenInputCoordinates.value = '';
     let img = new Image();
     let fr = new FileReader();
     fr.onload = () => {
@@ -55,11 +69,19 @@ inputElem.addEventListener('change', () => {
     fr.readAsDataURL(inputElem.files[0]);
 })
 
-const getCoordinates = (target, e) => {
+const getCoordinates = (target, e, dotClicked = false) => {
     const rect = target.getBoundingClientRect();
 
-    const xRelative = Math.floor(e.clientX - rect.left);
-    const yRelative = Math.floor(e.clientY - rect.top);
+    const clickX = dotClicked
+        ? e.currentTarget.getBoundingClientRect().left + e.currentTarget.getBoundingClientRect().width / 2
+        : e.clientX;
+
+    const clickY = dotClicked
+        ? e.currentTarget.getBoundingClientRect().top + e.currentTarget.getBoundingClientRect().height / 2
+        : e.clientY;
+
+    const xRelative = Math.floor(clickX - rect.left);
+    const yRelative = Math.floor(clickY - rect.top);
 
     const xScale = originalHeight / target.offsetHeight;
     const yScale = originalWidth / target.offsetWidth;
@@ -80,27 +102,18 @@ const getCoordinates = (target, e) => {
  * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
  */
 imgElem.addEventListener('click', (e) => {
-    submitBtn.toggleAttribute('disabled', hiddenInput.value !== '');
-
+    submitBtn.toggleAttribute('disabled', hiddenInputCoordinates.value !== '');
     createDot(e.clientX, e.clientY);
-    
-    console.log(e.currentTarget);
-
     const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(e.currentTarget, e);
-
-    const duplicate = coordinates.indexOf(obj => obj.x === xRelativeToOriginal && obj.y === yRelativeToOriginal)
-
-    duplicate > -1 
-        ? coordinates.splice(index, 1)
-        : coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
-
-    hiddenInput.value += `[${xRelativeToOriginal}, ${yRelativeToOriginal}]`;
-
-    console.log(hiddenInput.value);
+    coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
+    labels.push(checkbox.checked ? 0 : 1);
+    console.log([...labels]);
 })
 
 form.addEventListener('submit', (e) => {
     e.preventDefault();
-    console.log('But now...');
+    
+    coordinates.forEach(co => hiddenInputCoordinates.value += `[${co.x}, ${co.y}]`);
+
     form.submit();
 })

@@ -1,9 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap');
+
+.roboto-regular {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
 :root {
     --dot-size: 1rem;
-    --dot-border-size: .125rem;
 }
 body {
     position: relative;
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
 }
 
 h2 {
@@ -46,10 +55,16 @@ input::file-selector-button {
     position: absolute;
     width: var(--dot-size);
     height: var(--dot-size);
-    border: var(--dot-border-size) solid lightblue;
     border-radius: 50%;
-    background-color: blue;
     transform: translate(-100%, -100%);
+}
+
+.dot.include {
+    background-color: blue;
+}
+
+.dot.exclude {
+    background-color: red;
 }
 
 #form_content {

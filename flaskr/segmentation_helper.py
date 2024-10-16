@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import re
 import ast
+from pathlib import Path
 
 # select the device for computation
 if torch.cuda.is_available():
@@ -74,16 +75,13 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         if len(scores) > 1:
             plt.title(f"Mask {i+1}, Score: {score:.3f}", fontsize=18)
         plt.axis('off')
+        Path("./resources/results").mkdir(parents=True, exist_ok=True)
         plt.savefig(f'./resources/results/figure{i+1}.png', bbox_inches='tight')
         plt.show()
 
 def sendImage(image, coordinates, doPrediction):
     image = Image.open(image)
     image = np.array(image.convert('RGB'))
-    plt.figure(figsize=(10, 10))
-    plt.imshow(image)
-    plt.axis('on')
-    plt.show()
 
     if doPrediction == True:
         predictSegments(image, coordinates)
@@ -117,6 +115,7 @@ def predictSegments(image, coordinates):
     )
     sorted_ind = np.argsort(scores)[::-1]
     masks = masks[sorted_ind]
+    print(masks)
     scores = scores[sorted_ind]
     logits = logits[sorted_ind]
 

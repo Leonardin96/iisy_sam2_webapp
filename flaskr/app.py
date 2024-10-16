@@ -38,8 +38,6 @@ def index():
         
         # Request send with file and file-type is correct
         if file and allowed_file(file.filename):
-            print('Successful POST')
-            print('Coordinates: ', request.form['coordinates'])
             segmentation_helper.sendImage(file, request.form['coordinates'], True) 
             return redirect(url_for('results'))
 
