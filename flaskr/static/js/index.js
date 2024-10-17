@@ -37,6 +37,7 @@ const createDot = (posX, posY) => {
     const dotNode = document.querySelector('body').appendChild(dot);
 
     dotNode.addEventListener('click', (e) => {
+        console.log('dot click', e.clientX, e.clientY);
         const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(imgElem, e, true);
 
         const duplicate = coordinates.findIndex(obj => obj.x === xRelativeToOriginal && obj.y === yRelativeToOriginal);
@@ -54,6 +55,7 @@ const createDot = (posX, posY) => {
 
 }
 
+
 /**
  * Event-Handler for when the user chooses a picture.
  * Reads the file and extracts the dimensions of it.
@@ -64,13 +66,18 @@ inputElem.addEventListener('change', () => {
     });
 
     hiddenInputCoordinates.value = '';
+
     let img = new Image();
     let fr = new FileReader();
     fr.onload = () => {
         imgElem.src = fr.result;
         img.src = fr.result;
-        originalHeight = img.height;
-        originalWidth = img.width;
+
+        img.onload = () => {
+            originalHeight = img.height;
+            originalWidth = img.width;
+        }
+        
     };
     fr.readAsDataURL(inputElem.files[0]);
 })
@@ -89,8 +96,8 @@ const getCoordinates = (target, e, dotClicked = false) => {
     const xRelative = Math.floor(clickX - rect.left);
     const yRelative = Math.floor(clickY - rect.top);
 
-    const xScale = originalHeight / target.offsetHeight;
-    const yScale = originalWidth / target.offsetWidth;
+    const xScale = target.naturalHeight / target.offsetHeight;
+    const yScale = target.naturalWidth / target.offsetWidth;
 
     const xRelativeToOriginal = Math.floor(xRelative * xScale);
     const yRelativeToOriginal = Math.floor(yRelative * yScale);
@@ -108,6 +115,7 @@ const getCoordinates = (target, e, dotClicked = false) => {
  * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
  */
 imgElem.addEventListener('click', (e) => {
+    console.log('img click', e.offsetX, e.offsetY);
     createDot(e.clientX, e.clientY);
 
     const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(e.currentTarget, e);

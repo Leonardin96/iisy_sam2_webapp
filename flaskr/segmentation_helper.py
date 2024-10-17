@@ -83,9 +83,8 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
             plt.title(f"Mask {i+1}, Score: {score:.3f}", fontsize=18)
         plt.axis('off')
         plt.savefig(f'./resources/results/images/figure{i+1}.png', bbox_inches='tight')
-        plt.show()
 
-def sendImage(image, coordinates, labels):
+def evaluateImage(image, coordinates, labels):
     image = Image.open(image)
     image = np.array(image.convert('RGB'))
 

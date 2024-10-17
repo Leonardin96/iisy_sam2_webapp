@@ -5,10 +5,12 @@ from pathlib import Path
 
 
 from flask import (
-    Flask, render_template, request, redirect, url_for
+    Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
 )
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+IMAGE_FOLDER = os.path.join(os.getcwd(), 'resources/results/images')
 
 directories = [
         "./resources/results/images",
@@ -60,7 +62,7 @@ def index():
         
         # Request send with file and file-type is correct
         if file and allowed_file(file.filename):
-            segmentation_helper.sendImage(file, request.form['coordinates'], request.form['labels']) 
+            segmentation_helper.evaluateImage(file, request.form['coordinates'], request.form['labels']) 
             return redirect(url_for('results'))
 
         return render_template('index.html')
@@ -68,3 +70,19 @@ def index():
 @app.route('/results', methods=['GET', 'POST'])
 def results():
     return render_template('results.html')
+
+@app.route('/image-list')
+def list_images():
+    try:
+        # Get a list of files in the image folder
+        files = os.listdir(IMAGE_FOLDER)
+        # Filter image files (you can add other extensions if needed)
+        image_files = [f for f in files if f.endswith(('.png'))]
+        return jsonify(image_files)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+# Serve image files from the 'static/images' folder
+@app.route('/resources/results/images/<filename>')
+def serve_image(filename):
+    return send_from_directory(IMAGE_FOLDER, filename)
