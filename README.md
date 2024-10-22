@@ -34,3 +34,7 @@ Die Bildergebnisse werden auf der **Results**-Seite angezeigt. Darüber hinaus, 
 ./resources/results/masks/output</code>
 
 abgespeichert. Diese Ordner werden allerdings geleert, sobald man auf die Startseite zurückkehrt.
+
+## Lizenz
+
+Wie auch SAM 2, ist dieses Projekt unter der [Apache 2.0](./LICENSE)-Lizenz lizensiert.
