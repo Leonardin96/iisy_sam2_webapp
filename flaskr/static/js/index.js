@@ -37,7 +37,6 @@ const createDot = (posX, posY) => {
     const dotNode = document.querySelector('body').appendChild(dot);
 
     dotNode.addEventListener('click', (e) => {
-        console.log('dot click', e.clientX, e.clientY);
         const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(imgElem, e, true);
 
         const duplicate = coordinates.findIndex(obj => obj.x === xRelativeToOriginal && obj.y === yRelativeToOriginal);
@@ -102,11 +101,6 @@ const getCoordinates = (target, e, dotClicked = false) => {
     const xRelativeToOriginal = Math.floor(xRelative * xScale);
     const yRelativeToOriginal = Math.floor(yRelative * yScale);
 
-    console.log('Relative to image in Browser:');
-    console.log('x: '+ xRelative, 'y: ' + yRelative);
-    console.log('Relative to original:');
-    console.log('x: '+ xRelativeToOriginal, 'y: ' + yRelativeToOriginal);
-
     return [xRelativeToOriginal, yRelativeToOriginal];
 }
 
@@ -127,6 +121,10 @@ imgElem.addEventListener('click', (e) => {
     }
 })
 
+/**
+ * Event-Handler for when the user wants to submit their selection to the model.
+ * Prevents the default-submit and populates the hidden-inputs before sending the data to the model.
+ */
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     
