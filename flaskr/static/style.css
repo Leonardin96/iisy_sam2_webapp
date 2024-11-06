@@ -114,7 +114,6 @@ input::file-selector-button {
 
 #img_container > img {
     align-self: center;
-    max-height: 75vh;
     max-width: 100%;
 }
 

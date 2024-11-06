@@ -28,6 +28,9 @@ window.onbeforeunload = () => {
 const createDot = (posX, posY) => {
     const dot = document.createElement('div');
 
+    posY += window.scrollY;
+    posX += window.scrollX;
+
     checkbox.checked
         ? dot.setAttribute('class', 'dot exclude')
         : dot.setAttribute('class', 'dot include');
@@ -53,7 +56,6 @@ const createDot = (posX, posY) => {
     })
 
 }
-
 
 /**
  * Event-Handler for when the user chooses a picture.
@@ -95,8 +97,8 @@ const getCoordinates = (target, e, dotClicked = false) => {
     const xRelative = Math.floor(clickX - rect.left);
     const yRelative = Math.floor(clickY - rect.top);
 
-    const xScale = target.naturalHeight / target.offsetHeight;
-    const yScale = target.naturalWidth / target.offsetWidth;
+    const xScale = originalWidth / target.offsetWidth;
+    const yScale = originalHeight / target.offsetHeight;
 
     const xRelativeToOriginal = Math.floor(xRelative * xScale);
     const yRelativeToOriginal = Math.floor(yRelative * yScale);
@@ -109,7 +111,6 @@ const getCoordinates = (target, e, dotClicked = false) => {
  * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
  */
 imgElem.addEventListener('click', (e) => {
-    console.log('img click', e.offsetX, e.offsetY);
     createDot(e.clientX, e.clientY);
 
     const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(e.currentTarget, e);
