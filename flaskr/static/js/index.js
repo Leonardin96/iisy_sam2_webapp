@@ -1,17 +1,25 @@
-const inputElem = document.querySelector('#img_input');
+const inputElem = document.querySelector('#img-input');
 const checkbox = document.querySelector('#checkbox');
-const hiddenInputCoordinates = document.querySelector('#coordinates_input');
-const hiddenInputLabels = document.querySelector('#labels_input');
+const hiddenInputCoordinates = document.querySelector('#coordinates-input');
+const hiddenInputLabels = document.querySelector('#labels-input');
 const imgElem = document.querySelector('img');
 const form = document.querySelector('form');
-const submitBtn = document.querySelector('#submit_btn');
+const submitBtn = document.querySelector('#submit-btn');
+const canvas = document.querySelector('#canvas');
+const accentColor = getComputedStyle(document.body).getPropertyValue('--main-accent-color');
+const radioBtns = form.selectionType;
 
 let originalHeight = 0;
 let originalWidth = 0;
 let coordinates = [];
 let labels = [];
+let origin = null;
+let canvasHeight = null;
+let canvasWidth = null;
+let selType = null;
 
 submitBtn.disabled = true;
+let context = null;
 
 /**
  * Clears the form before the page reloads.
@@ -57,31 +65,22 @@ const createDot = (posX, posY) => {
 
 }
 
-/**
- * Event-Handler for when the user chooses a picture.
- * Reads the file and extracts the dimensions of it.
- */
-inputElem.addEventListener('change', () => {
-    document.querySelectorAll('.dot').forEach(elem => {
-        elem.remove();
-    });
+const checkSelectionType = (radioBtn) => {
+    if (radioBtn.checked && radioBtn.value !== selType) {
+        selType = radioBtn.value;
+        changeCanvasAccessibilty();
+    }
+}
 
-    hiddenInputCoordinates.value = '';
+const changeCanvasDimension = () => {
+    canvasWidth = canvas.offsetWidth;
+    canvasHeight = canvas.offsetHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
-    let img = new Image();
-    let fr = new FileReader();
-    fr.onload = () => {
-        imgElem.src = fr.result;
-        img.src = fr.result;
-
-        img.onload = () => {
-            originalHeight = img.height;
-            originalWidth = img.width;
-        }
-        
-    };
-    fr.readAsDataURL(inputElem.files[0]);
-})
+    context = canvas.getContext('2d');
+    context.lineWidth = 4;
+}
 
 const getCoordinates = (target, e, dotClicked = false) => {
     const rect = target.getBoundingClientRect();
@@ -106,6 +105,44 @@ const getCoordinates = (target, e, dotClicked = false) => {
     return [xRelativeToOriginal, yRelativeToOriginal];
 }
 
+const canvasMouseDownHandler = (e) => {
+    origin = {
+        x: e.offsetX,
+        y: e.offsetY
+    };
+}
+
+const canvasMouseMoveHandler = (e) => {
+    if (!!origin) {
+        context.strokeStyle = accentColor;
+        context.clearRect(0, 0, canvasWidth, canvasHeight);
+        context.beginPath();
+        context.rect(origin.x, origin.y, e.offsetX - origin.x, e.offsetY - origin.y);
+        context.stroke();
+    }
+}
+
+const changeCanvasAccessibilty = () => {
+    if (selType !== 'box') {
+        canvas.style.display = 'none';
+        canvas.removeEventListener('mousedown', (e) => {
+            canvasMouseDownHandler(e)
+        })
+        canvas.removeEventListener('mousemove', (e) => {
+            canvasMouseMoveHandler(e)
+        })
+    } else {
+        canvas.style.display = 'block';
+        changeCanvasDimension();
+        canvas.addEventListener('mousedown', (e) => {
+            canvasMouseDownHandler(e)
+        })
+        canvas.addEventListener('mousemove', (e) => {
+            canvasMouseMoveHandler(e)
+        })
+    }
+}
+
 /**
  * Event-Handler for when the user clicks inside the image.
  * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
@@ -120,6 +157,46 @@ imgElem.addEventListener('click', (e) => {
     if (coordinates.length > 0) {
         submitBtn.disabled = false;
     }
+})
+
+radioBtns.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        checkSelectionType(e.target);
+    })
+})
+
+radioBtns.forEach(radio => checkSelectionType(radio));
+
+/**
+ * Event-Handler for when the user chooses a picture.
+ * Reads the file and extracts the dimensions of it.
+ */
+inputElem.addEventListener('change', () => {
+    document.querySelectorAll('.dot').forEach(elem => {
+        elem.remove();
+    });
+
+    hiddenInputCoordinates.value = '';
+
+    let img = new Image();
+    let fr = new FileReader();
+    fr.onload = () => {
+        imgElem.src = fr.result;
+        img.src = fr.result;
+
+        img.onload = () => {
+            originalHeight = img.height;
+            originalWidth = img.width;
+
+            changeCanvasDimension();
+        }
+  
+    };
+    fr.readAsDataURL(inputElem.files[0]);
+})
+
+window.addEventListener('mouseup', () => {
+    origin = null;
 })
 
 /**
