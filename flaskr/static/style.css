@@ -11,8 +11,6 @@
     --main-accent-color: #76ABAE;
 }
 
-
-
 html,
 body {
     margin: 0;
@@ -149,15 +147,6 @@ input::file-selector-button {
     display: flex;
     gap: 1rem;
     align-items: center;
-}
-
-#input-container__radio-container {
-    display: flex;
-    gap: .5rem;
-}
-
-#input-container__radio-container > p {
-    margin: 0;
 }
 
 #submit-btn {

@@ -7,7 +7,6 @@ const form = document.querySelector('form');
 const submitBtn = document.querySelector('#submit-btn');
 const canvas = document.querySelector('#canvas');
 const accentColor = getComputedStyle(document.body).getPropertyValue('--main-accent-color');
-const radioBtns = form.selectionType;
 
 let originalHeight = 0;
 let originalWidth = 0;
@@ -20,6 +19,9 @@ let selType = null;
 
 submitBtn.disabled = true;
 let context = null;
+const dotSize = 12;
+
+let mouseMoved = false;
 
 /**
  * Clears the form before the page reloads.
@@ -29,46 +31,15 @@ window.onbeforeunload = () => {
 }
 
 /**
- * Creates an element at the mouseclick-position, indicating the clicked coordinate.
- * @param {number} posX 
- * @param {number} posY 
+ * Draws a "dot" on the canvas based on the given coordinates and the given label-value.
+ * @param {int} x
+ * @param {int} y 
+ * @param {boolean} checked
  */
-const createDot = (posX, posY) => {
-    const dot = document.createElement('div');
-
-    posY += window.scrollY;
-    posX += window.scrollX;
-
-    checkbox.checked
-        ? dot.setAttribute('class', 'dot exclude')
-        : dot.setAttribute('class', 'dot include');
-    dot.style.top = posY + 'px';
-    dot.style.left = posX + 'px';
-
-    const dotNode = document.querySelector('body').appendChild(dot);
-
-    dotNode.addEventListener('click', (e) => {
-        const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(imgElem, e, true);
-
-        const duplicate = coordinates.findIndex(obj => obj.x === xRelativeToOriginal && obj.y === yRelativeToOriginal);
-
-        if (duplicate > -1) {
-            coordinates.splice(duplicate, 1);
-            labels.splice(duplicate, 1);
-            e.currentTarget.remove();
-        }
-
-        if (coordinates.length < 1) {
-            submitBtn.disabled = true;
-        }
-    })
-
-}
-
-const checkSelectionType = (radioBtn) => {
-    if (radioBtn.checked && radioBtn.value !== selType) {
-        selType = radioBtn.value;
-        changeCanvasAccessibilty();
+const drawDot = (x, y, checked) => {
+    if (x && y) {
+        context.fillStyle = checked ? 'red' : accentColor;
+        context.fillRect((x - (dotSize / 2)), (y - (dotSize / 2)), dotSize, dotSize);
     }
 }
 
@@ -82,30 +53,53 @@ const changeCanvasDimension = () => {
     context.lineWidth = 4;
 }
 
-const getCoordinates = (target, e, dotClicked = false) => {
-    const rect = target.getBoundingClientRect();
+/**
+ * Redraws the whole canvas based on the saved coordinates.
+ */
+const redrawCanvas = () => {
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    const clickX = dotClicked
-        ? e.currentTarget.getBoundingClientRect().left + e.currentTarget.getBoundingClientRect().width / 2
-        : e.clientX;
+    coordinates.forEach((dot, index) => {
+        [x, y] = getOrigin(dot.x, dot.y);
+        drawDot(x, y, labels[index]);
+    })
+}
 
-    const clickY = dotClicked
-        ? e.currentTarget.getBoundingClientRect().top + e.currentTarget.getBoundingClientRect().height / 2
-        : e.clientY;
+/**
+ * Calculates the coordinates of the dot relative to the original dimensions of the image.
+ * @param {int} x 
+ * @param {int} y 
+ * @returns {int[]}
+ */
+const getRelativeCoordinates = (x, y) => {
+    const xScale = originalWidth / imgElem.offsetWidth;
+    const yScale = originalHeight / imgElem.offsetHeight;
 
-    const xRelative = Math.floor(clickX - rect.left);
-    const yRelative = Math.floor(clickY - rect.top);
-
-    const xScale = originalWidth / target.offsetWidth;
-    const yScale = originalHeight / target.offsetHeight;
-
-    const xRelativeToOriginal = Math.floor(xRelative * xScale);
-    const yRelativeToOriginal = Math.floor(yRelative * yScale);
+    const xRelativeToOriginal = Math.floor(x * xScale);
+    const yRelativeToOriginal = Math.floor(y * yScale);
 
     return [xRelativeToOriginal, yRelativeToOriginal];
 }
 
+/**
+ * "Unscales" the relative coordinates to get the origin-point.
+ * @param {int} x 
+ * @param {int} y 
+ * @returns {float[]}
+ */
+const getOrigin = (x, y) => {
+    const xScale = originalWidth / imgElem.offsetWidth;
+    const yScale = originalHeight / imgElem.offsetHeight;
+
+    const originalX = x / xScale;
+    const originalY = y / yScale;
+
+    return [originalX, originalY];
+}
+
 const canvasMouseDownHandler = (e) => {
+    mouseMoved = false;
+
     origin = {
         x: e.offsetX,
         y: e.offsetY
@@ -115,57 +109,47 @@ const canvasMouseDownHandler = (e) => {
 const canvasMouseMoveHandler = (e) => {
     if (!!origin) {
         context.strokeStyle = accentColor;
-        context.clearRect(0, 0, canvasWidth, canvasHeight);
+        redrawCanvas();
         context.beginPath();
         context.rect(origin.x, origin.y, e.offsetX - origin.x, e.offsetY - origin.y);
         context.stroke();
-    }
-}
 
-const changeCanvasAccessibilty = () => {
-    if (selType !== 'box') {
-        canvas.style.display = 'none';
-        canvas.removeEventListener('mousedown', (e) => {
-            canvasMouseDownHandler(e)
-        })
-        canvas.removeEventListener('mousemove', (e) => {
-            canvasMouseMoveHandler(e)
-        })
-    } else {
-        canvas.style.display = 'block';
-        changeCanvasDimension();
-        canvas.addEventListener('mousedown', (e) => {
-            canvasMouseDownHandler(e)
-        })
-        canvas.addEventListener('mousemove', (e) => {
-            canvasMouseMoveHandler(e)
-        })
+        mouseMoved = true;
     }
 }
 
 /**
- * Event-Handler for when the user clicks inside the image.
- * Calculates the coordinates relative to picture dimensions for the segmentation model to use.
+ * Event-Handler for when the mouseup-event is fired on the canvas.
  */
-imgElem.addEventListener('click', (e) => {
-    createDot(e.clientX, e.clientY);
+const canvasMouseUpHandler = () => {
+    if (!mouseMoved) {
+        const [xRelativeToOriginal, yRelativeToOriginal] = getRelativeCoordinates(...Object.values(origin));
+        const duplicate = coordinates.findIndex(obj =>
+            Math.sqrt((obj.x - xRelativeToOriginal) ** 2 + (obj.y - yRelativeToOriginal) ** 2) <= dotSize / 2);
 
-    const [xRelativeToOriginal, yRelativeToOriginal] = getCoordinates(e.currentTarget, e);
-    coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
-    labels.push(checkbox.checked ? 0 : 1);
+        if (duplicate > -1) {
+            coordinates.splice(duplicate, 1);
+            labels.splice(duplicate, 1);
+
+            redrawCanvas();
+        } else {
+            drawDot(...Object.values(origin), checkbox.checked);
+            
+            coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
+            labels.push(checkbox.checked ? 1 : 0);
+        }
+    }
 
     if (coordinates.length > 0) {
         submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
     }
-})
+}
 
-radioBtns.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        checkSelectionType(e.target);
-    })
-})
-
-radioBtns.forEach(radio => checkSelectionType(radio));
+canvas.addEventListener('mousedown', canvasMouseDownHandler);
+canvas.addEventListener('mousemove', canvasMouseMoveHandler);
+canvas.addEventListener('mouseup', canvasMouseUpHandler);
 
 /**
  * Event-Handler for when the user chooses a picture.
