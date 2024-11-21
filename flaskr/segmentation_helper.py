@@ -84,13 +84,13 @@ def show_masks(image, masks, scores, point_coords=None, box_coords=None, input_l
         plt.axis('off')
         plt.savefig(f'./resources/results/images/figure{i+1}.png', bbox_inches='tight')
 
-def evaluateImage(image, coordinates, labels):
+def evaluateImage(image, coordinates, labels, box_coordinates=None):
     image = Image.open(image)
     image = np.array(image.convert('RGB'))
 
-    predictSegments(image, coordinates, labels)
+    predictSegments(image, coordinates, labels, box_coordinates)
 
-def predictSegments(image, coordinates, labels):
+def predictSegments(image, coordinates, labels, box_coordinates):
     from sam2.build_sam import build_sam2
     from sam2.sam2_image_predictor import SAM2ImagePredictor
 
@@ -105,20 +105,21 @@ def predictSegments(image, coordinates, labels):
 
     # Use regex to extract the contents of each list
     cordMatches = re.findall(r'\[.*?\]', coordinates)
+    boxMatches = re.findall(r'\[.*?\]', box_coordinates)
 
     # Evaluate each match to convert it into a list
     coordinateArray = [ast.literal_eval(match) for match in cordMatches]
     labelArray = ast.literal_eval(labels)
+    boxes = [ast.literal_eval(match) for match in boxMatches]
 
-    input_point = np.array(coordinateArray)
-    input_label = np.array(labelArray)
-
-    print(input_point)
-    print(input_label)
+    input_points = np.array(coordinateArray)
+    input_labels = np.array(labelArray)
+    input_boxes = np.array(boxes)
 
     masks, scores, logits = predictor.predict(
-        point_coords=input_point,
-        point_labels=input_label,
+        point_coords=input_points if input_points.size > 0 else None,
+        point_labels=input_labels if input_labels.size > 0 else None,
+        box=input_boxes if input_boxes.size > 0 else None,
         multimask_output=True,
     )
     sorted_ind = np.argsort(scores)[::-1]
@@ -128,64 +129,9 @@ def predictSegments(image, coordinates, labels):
 
     masks.shape
 
-    show_masks(image, masks, scores, point_coords=input_point, input_labels=input_label, borders=True)
-
-# image = Image.open('./images/truck.jpg')
-# image = np.array(image.convert("RGB"))
-
-# # plt.figure(figsize=(10, 10))
-# # plt.imshow(image)
-# # plt.axis('on')
-# # plt.show()
-
-# input_point = np.array(coordinateArrays)
-# input_label = np.array([1])
-
-# # plt.figure(figsize=(10, 10))
-# # plt.imshow(image)
-# # show_points(input_point, input_label, plt.gca())
-# # plt.axis('on')
-# # plt.show()
-
-# print(predictor._features["image_embed"].shape, predictor._features["image_embed"][-1].shape)
-
-# masks, scores, logits = predictor.predict(
-#     point_coords=input_point,
-#     point_labels=input_label,
-#     multimask_output=True,
-# )
-# sorted_ind = np.argsort(scores)[::-1]
-# masks = masks[sorted_ind]
-# scores = scores[sorted_ind]
-# logits = logits[sorted_ind]
-
-# masks.shape
-
-# # show_masks(image, masks, scores, point_coords=input_point, input_labels=input_label, borders=True)
-
-# # input_point = np.array([[500, 375], [1125, 625]])
-# # input_label = np.array([1, 0])
-
-# # mask_input = logits[np.argmax(scores), :, :]  # Choose the model's best mask
-
-# # masks, scores, _ = predictor.predict(
-# #     point_coords=input_point,
-# #     point_labels=input_label,
-# #     mask_input=mask_input[None, :, :],
-# #     multimask_output=False,
-# # )
-
-# # masks.shape
-
-# # show_masks(image, masks, scores, point_coords=input_point, input_labels=input_label)
-
-# input_box = np.array([425, 600, 700, 875])
-
-# masks, scores, _ = predictor.predict(
-#     point_coords=None,
-#     point_labels=None,
-#     box=input_box[None, :],
-#     multimask_output=False,
-# )
-
-# show_masks(image, masks, scores, box_coords=input_box)
+    if input_points.size > 0 and input_boxes.size > 0:
+        show_masks(image, masks, scores, box_coords=input_boxes, point_coords=input_points, input_labels=input_labels, borders=True)
+    elif input_points.size > 0 and input_boxes.size == 0:
+        show_masks(image, masks, scores, point_coords=input_points, input_labels=input_labels, borders=True)
+    elif input_points.size == 0 and input_boxes.size > 0:
+        show_masks(image, masks, scores, box_coords=input_boxes)

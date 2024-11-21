@@ -23,6 +23,7 @@
         </div>
         <input id="coordinates-input" type="hidden" name="coordinates" value="" />
         <input id="labels-input" type="hidden" name="labels" value="" />
+        <input id="boxes-input" type="hidden" name="boxes" value="" />
       </div>
     </form>
     <div id="img-container">
@@ -31,6 +32,13 @@
         <img src="" />
         <canvas id="canvas"></canvas>
       </div>
+    </div>
+    <div id="coordinates-preview-container">
+      <div id="coordinates-preview-container__header-container">
+        <h2>Selected Coordinates</h2>
+        <input id="add-box-btn" class="btn" type="button" value="Add Box" disabled />
+      </div>
+      <div id="coordinates-preview-container__coordinates-container"></div>
     </div>
   </div>
 </body>

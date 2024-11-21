@@ -62,7 +62,7 @@ def index():
         
         # Request send with file and file-type is correct
         if file and allowed_file(file.filename):
-            segmentation_helper.evaluateImage(file, request.form['coordinates'], request.form['labels']) 
+            segmentation_helper.evaluateImage(file, request.form['coordinates'], request.form['labels'], request.form['boxes']) 
             return redirect(url_for('results'))
 
         return render_template('index.html')

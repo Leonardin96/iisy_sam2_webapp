@@ -2,15 +2,18 @@ const inputElem = document.querySelector('#img-input');
 const checkbox = document.querySelector('#checkbox');
 const hiddenInputCoordinates = document.querySelector('#coordinates-input');
 const hiddenInputLabels = document.querySelector('#labels-input');
+const hiddenInputBoxes = document.querySelector('#boxes-input');
 const imgElem = document.querySelector('img');
 const form = document.querySelector('form');
 const submitBtn = document.querySelector('#submit-btn');
+const addBoxBtn = document.querySelector('#add-box-btn');
 const canvas = document.querySelector('#canvas');
 const accentColor = getComputedStyle(document.body).getPropertyValue('--main-accent-color');
 
 let originalHeight = 0;
 let originalWidth = 0;
 let coordinates = [];
+let savedBoxCoord = [];
 let labels = [];
 let origin = null;
 let canvasHeight = null;
@@ -22,6 +25,7 @@ let context = null;
 const dotSize = 12;
 
 let mouseMoved = false;
+let currentBoxCoord = [];
 
 /**
  * Clears the form before the page reloads.
@@ -108,13 +112,23 @@ const canvasMouseDownHandler = (e) => {
 
 const canvasMouseMoveHandler = (e) => {
     if (!!origin) {
+        const width = e.offsetX - origin.x;
+        const height = e.offsetY - origin.y;
         context.strokeStyle = accentColor;
         redrawCanvas();
         context.beginPath();
-        context.rect(origin.x, origin.y, e.offsetX - origin.x, e.offsetY - origin.y);
+        context.rect(origin.x, origin.y, width, height);
         context.stroke();
 
+        currentBoxCoord = [
+            origin.x,
+            origin.y,
+            origin.x + width,
+            origin.y + height
+        ]
+
         mouseMoved = true;
+        addBoxBtn.disabled = false;
     }
 }
 
@@ -130,17 +144,16 @@ const canvasMouseUpHandler = () => {
         if (duplicate > -1) {
             coordinates.splice(duplicate, 1);
             labels.splice(duplicate, 1);
-
             redrawCanvas();
         } else {
+            redrawCanvas();
             drawDot(...Object.values(origin), checkbox.checked);
-            
             coordinates.push({x: xRelativeToOriginal, y: yRelativeToOriginal})
-            labels.push(checkbox.checked ? 1 : 0);
+            labels.push(checkbox.checked ? 0 : 1);
         }
     }
 
-    if (coordinates.length > 0) {
+    if (coordinates.length > 0 || savedBoxCoord.length > 0) {
         submitBtn.disabled = false;
     } else {
         submitBtn.disabled = true;
@@ -183,15 +196,36 @@ window.addEventListener('mouseup', () => {
     origin = null;
 })
 
+addBoxBtn.addEventListener('click', () => {
+    if (mouseMoved) {
+        savedBoxCoord.push(currentBoxCoord);
+        console.log(savedBoxCoord);
+
+        if (coordinates.length > 0 || savedBoxCoord.length > 0) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+})
+
 /**
  * Event-Handler for when the user wants to submit their selection to the model.
  * Prevents the default-submit and populates the hidden-inputs before sending the data to the model.
  */
 form.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    const relativeBoxCoordinates = savedBoxCoord.map(coordArr => {
+        const [xStart, yStart] = getRelativeCoordinates(coordArr[0], coordArr[1]);
+        const [xEnd, yEnd] = getRelativeCoordinates(coordArr[2], coordArr[3]);
+
+        return [xStart, yStart, xEnd, yEnd];
+    });
     
     coordinates.forEach(co => hiddenInputCoordinates.value += `[${co.x}, ${co.y}]`);
     hiddenInputLabels.value += `[${labels}]`;
+    relativeBoxCoordinates.forEach(coordArr => hiddenInputBoxes.value += `[${coordArr}]`);
 
     form.submit();
 })
